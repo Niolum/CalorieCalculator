@@ -3,18 +3,24 @@ from django.urls import reverse
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
+from pytils.translit import slugify
 
 # Create your models here.
 class Category(models.Model):
     name = models.CharField(verbose_name='Название', max_length=255)
     photo = models.ImageField(verbose_name='Изображение', upload_to='category/')
-    slug = models.SlugField(max_length=160, unique=True)
+    slug = models.SlugField(max_length=160, unique=True, blank=True)
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
         return reverse('categories', kwargs={'slug': self.slug})
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.slug = slugify(self.name)
+        super(Category, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Категория'
