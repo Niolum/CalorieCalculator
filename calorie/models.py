@@ -1,3 +1,4 @@
+from pydoc import describe
 from tabnanny import verbose
 from django.urls import reverse
 from django.db import models
@@ -29,13 +30,14 @@ class Category(models.Model):
 class Product(models.Model):
     name = models.CharField(verbose_name='Название', max_length=255)
     photo = models.ImageField(verbose_name='Изображение', upload_to='product/')
-    quantity = models.PositiveSmallIntegerField(default=1)
+    quantity = models.PositiveSmallIntegerField(verbose_name='Количество', default=1)
     calorie = models.FloatField(verbose_name='Ккал')
     fat = models.FloatField(verbose_name='Жиры')
     protein = models.FloatField(verbose_name='Белки')
     carbohydrate = models.FloatField(verbose_name='Углеводы')
     slug = models.SlugField(max_length=160, unique=True)
     category = models.ForeignKey(Category, verbose_name='Категория', on_delete=models.PROTECT)
+    description = models.TextField(verbose_name='Описание', default='')
     
 
     def __str__(self):
@@ -43,6 +45,11 @@ class Product(models.Model):
 
     def get_absolute_url(self):
         return reverse('products', kwargs={'slug': self.slug})
+    
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.slug = slugify(self.name)
+        super(Product, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Продукт'
