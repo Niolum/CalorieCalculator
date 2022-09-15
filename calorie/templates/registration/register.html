@@ -1,0 +1,18 @@
+{% extends 'calorie/base.html' %}
+{% block title %}
+<title>Выход</title>
+{% endblock title %}
+{% block content %}
+<div class="container">
+    <div class="register-form">
+        <h1>Создание аккаунта</h1>
+        <p>Пожалуйста, зарегистрируйтесь, используя следующую форму:</p>
+        <form class="register-form" action="." method="post">
+            {{ form.as_p }}
+            {% csrf_token %}
+            
+            <p><input type="submit" value="Создать мой аккаунт" class="btn btn-primary register-button"></p>
+        </form>
+    </div> 
+</div>
+{% endblock content %}

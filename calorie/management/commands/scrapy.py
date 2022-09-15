@@ -2,6 +2,8 @@ from django.core.management.base import BaseCommand
 from bs4 import BeautifulSoup
 import requests
 from calorie.models import Category, Product
+from django.core.files.base import ContentFile
+import os
 
 
 class Command(BaseCommand):
@@ -19,7 +21,6 @@ class Command(BaseCommand):
             soup = BeautifulSoup(page.text, 'html.parser')
 
             all_categories = soup.findAll('div', class_='main_block')
-            # print(all_categories)
             for data in all_categories:
                 if data.find('div', class_='menu_name'):
                     data = data.text.replace('\n', '')
@@ -27,15 +28,12 @@ class Command(BaseCommand):
 
             for data in all_categories:
                 if data.find('div', class_='main_menu_image'):
-                    # img_url = data.text
-                    # categories_image.append(img_url)
                     img = data.find('img')
                     img_url = img.attrs.get('src')
                     img_url = 'https://supercalorizator.ru/' + img_url
                     categories_image.append(img_url)
 
             all_cat_divi = soup.findAll('divi', class_='main_block')
-            # print(all_categories)
             for data in all_cat_divi:
                 if data.find('div', class_='menu_name'):
                     data = data.text.replace('\n', '')
@@ -43,13 +41,19 @@ class Command(BaseCommand):
 
             for data in all_cat_divi:
                 if data.find('div', class_='main_menu_image'):
-                    # img_url = data.text
-                    # categories_image.append(img_url)
                     img = data.find('img')
                     img_url = img.attrs.get('src')
                     img_url = 'https://supercalorizator.ru/' + img_url
                     categories_image.append(img_url)
 
+            count_name = 0  
+            div_img = len(categories_name) 
+            while count_name != div_img:
+                name_pict = categories_name[count_name]
+                img_link = categories_image[count_name]
+                with open(os.path.join('media/category', f'{name_pict}.png'), "wb") as f:
+                    f.write(requests.get(img_link).content)
+                    count_name += 1
 
             links = []
 
@@ -71,10 +75,13 @@ class Command(BaseCommand):
         length = len(categories_image)
 
         while count != length:
+            with open(os.path.join('media/category', f"{categories_name[count]}.png"), "rb") as f:
+                data = f.read()
             try:
-                Category.objects.create(
+                Category.objects.get_or_create(
                     name = categories_name[count],
-                    photo = categories_image[count]
+                    # photo = categories_image[count]
+                    photo = Category.image.save(data)
                 )
                 print(categories_name[count])
                 print(categories_image[count])
@@ -157,16 +164,28 @@ class Command(BaseCommand):
                 all_text = soup.find('div', id='prod_descr').text + soup.find('div', id='snoski').text + soup.find('div', id='for_diet').text
                 descriptions.append(all_text)
 
+            count_name = 0  
+            count_img = len(images) 
+            while count_name != count_img:
+                name_pict = names[count_name]
+                img_link = images[count_name]
+                with open(os.path.join(f'media/product/{category}', f'{name_pict}.png'), "wb") as f:
+                    f.write(requests.get(img_link).content)
+                    count_name += 1
+
 
             # Запись продуктов в БД
             count = 0
             length = len(names)
 
             while count != length:
+                with open(os.path.join(f"media/product/{category}", f"{names[count]}.png"), "rb") as f:
+                    data = f.read()
                 try:
                     Product.objects.get_or_create(
                         name = names[count],
-                        photo = images[count],
+                        # photo = images[count],
+                        photo = Product.image.save(data),
                         calorie = table['calorie'][count],
                         fat = table['fat'][count],
                         protein = table['protein'][count],
